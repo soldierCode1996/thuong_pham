@@ -14,19 +14,20 @@ import lombok.Setter;
 @Table(name = "foods")
 public class Food {
     @Id
+    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(name = "name")
     private String name;
-
+    @Column(name = "food_group")
     private String group;
-
+    @Column(name = "protein")
     private Double protein;
-
+    @Column(name = "lipid")
     private Double lipid;
-
+    @Column(name = "carbohydrate")
     private Double carbohydrate;
-
+    @Column(name = "image")
     private String image;
 
 }
