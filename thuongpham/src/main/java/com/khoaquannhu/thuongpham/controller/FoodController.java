@@ -1,5 +1,6 @@
 package com.khoaquannhu.thuongpham.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.khoaquannhu.thuongpham.dto.FoodRequestDto;
 import com.khoaquannhu.thuongpham.entity.Food;
 import com.khoaquannhu.thuongpham.sevice.FoodService;
@@ -29,10 +30,16 @@ public class FoodController {
     private final FoodService foodService;
 
     @PostMapping(value = "admin/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createFood(@RequestPart("image") MultipartFile image, @RequestPart("data")FoodRequestDto foodRequestDto) throws IOException {
+    public ResponseEntity<?> createFood(
+            @RequestPart("image") MultipartFile image,
+            @RequestPart("data") String foodDataJson) throws IOException {
+
+        // Parse JSON thủ công
+        ObjectMapper mapper = new ObjectMapper();
+        FoodRequestDto foodRequestDto = mapper.readValue(foodDataJson, FoodRequestDto.class);
 
         String imageFoodUrl = null;
-        if(image!=null && !image.isEmpty()){
+        if (image != null && !image.isEmpty()) {
             String uploadDir = new ClassPathResource("static/images/food").getFile().getAbsolutePath();
             String fileName = System.currentTimeMillis() + "-" + image.getOriginalFilename();
             Path path = Paths.get(uploadDir, fileName);
@@ -43,13 +50,16 @@ public class FoodController {
         Food food = new Food();
         food.setName(foodRequestDto.getName());
         food.setGroup(foodRequestDto.getGroup());
+        food.setOrdinalNumbers(foodRequestDto.getOrdinalNumbers());
         food.setProtein(foodRequestDto.getProtein());
         food.setLipid(foodRequestDto.getLipid());
         food.setCarbohydrate(foodRequestDto.getCarbohydrate());
         food.setImage(imageFoodUrl);
+
         foodService.save(food);
         return ResponseEntity.status(HttpStatus.CREATED).body(food);
     }
+
 
     @DeleteMapping("/admin/delete/{id}")
     public ResponseEntity<?> deleteFood(@PathVariable Long id){
@@ -72,33 +82,56 @@ public class FoodController {
 
 
     @GetMapping("/pdfs")
-    public ResponseEntity<byte[]> searchPdfPage(@RequestParam String foodName, @RequestParam String foodGroup) throws IOException {
-        String fileName = "static/pdfs" + foodGroup + ".pdf";
+    public ResponseEntity<byte[]> searchPdfPage(
+            @RequestParam int foodOrdinalNumbers,
+            @RequestParam String foodGroup)  {
+
+        // Xây dựng đường dẫn tới file PDF trong static
+        String fileName = "static/pdfs/" + foodGroup + ".pdf";
         ClassPathResource pdfResource = new ClassPathResource(fileName);
 
-       try(PDDocument document = PDDocument.load(pdfResource.getInputStream())) {
-           PDFTextStripper pdfStripper = new PDFTextStripper();
-
-           for(int page =1; page <= document.getNumberOfPages(); page++){
-               pdfStripper.setStartPage(page);
-               pdfStripper.setEndPage(page);
-               String text = pdfStripper.getText(document);
-               if(text.toLowerCase().contains(foodName.toLowerCase())) {
-                   PDDocument singlePageDoc = new PDDocument();
-                   singlePageDoc.addPage(document.getPage(page - 1));
-
-                   ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                   singlePageDoc.save(outputStream);
-                   singlePageDoc.close();
-
-                   HttpHeaders headers = new HttpHeaders();
-                   headers.setContentType(MediaType.APPLICATION_PDF);
-                   headers.setContentDispositionFormData("inline", foodName + ".pdf");
-                   return ResponseEntity.ok().headers(headers).body(outputStream.toByteArray());
-               }
-           }
+        // Đảm bảo file tồn tại
+        if (!pdfResource.exists()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(("Không tìm thấy file PDF cho nhóm: " + foodGroup).getBytes());
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(("Không tìm thấy thực phẩm: " + foodName).getBytes());
+
+        try (PDDocument document = PDDocument.load(pdfResource.getInputStream())) {
+
+            for (int page = 1; page <= document.getNumberOfPages(); page++) {
+                PDFTextStripper pdfStripper = new PDFTextStripper(); // <-- Tạo mới ở đây
+                pdfStripper.setStartPage(page);
+                pdfStripper.setEndPage(page);
+                String text = pdfStripper.getText(document);
+
+                System.out.println(">>> Đang kiểm tra trang " + page);
+                System.out.println(text);
+
+                if (text.toLowerCase().contains("stt: " + foodOrdinalNumbers)) {
+                    System.out.println(">>> Tìm thấy STT: " + foodOrdinalNumbers + " ở trang " + page);
+
+                    PDDocument singlePageDoc = new PDDocument();
+                    singlePageDoc.addPage(document.getPage(page - 1));
+
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    singlePageDoc.save(outputStream);
+                    singlePageDoc.close();
+
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_PDF);
+                    headers.setContentDispositionFormData("inline", "stt-" + foodOrdinalNumbers + ".pdf");
+
+                    return ResponseEntity.ok().headers(headers).body(outputStream.toByteArray());
+                }
+            }
+
+        }catch (IOException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(("Lỗi khi tìm file PDF").getBytes());
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(("Không tìm thấy STT: " + foodOrdinalNumbers + " trong nhóm " + foodGroup).getBytes());
     }
 
 }

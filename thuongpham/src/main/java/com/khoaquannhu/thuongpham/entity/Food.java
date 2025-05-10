@@ -19,6 +19,8 @@ public class Food {
     private Long id;
     @Column(name = "name")
     private String name;
+    @Column(name = "ordinal_numbers")
+    private Integer ordinalNumbers;
     @Column(name = "food_group")
     private String group;
     @Column(name = "protein")
