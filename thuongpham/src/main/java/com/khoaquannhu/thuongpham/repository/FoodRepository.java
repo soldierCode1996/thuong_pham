@@ -4,8 +4,8 @@ import com.khoaquannhu.thuongpham.entity.Food;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.List;
+import java.util.Optional;
 
 public interface FoodRepository extends JpaRepository<Food, Long> {
 
@@ -23,4 +23,5 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     @Query("SELECT f FROM Food f where lower(f.name) LIKE lower(concat('%', :name, '%') ) ")
     List<Food> findByNameLike(@Param("name") String name);
 
+    Optional<Food> findByOrdinalNumbers(Integer ordinalNumbers);
 }

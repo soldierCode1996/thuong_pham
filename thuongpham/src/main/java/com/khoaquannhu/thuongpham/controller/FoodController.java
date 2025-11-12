@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -40,11 +41,11 @@ public class FoodController {
 
         String imageFoodUrl = null;
         if (image != null && !image.isEmpty()) {
-            String uploadDir = new ClassPathResource("static/images/food").getFile().getAbsolutePath();
+            String uploadDir = new ClassPathResource("static/api/images/food").getFile().getAbsolutePath();
             String fileName = System.currentTimeMillis() + "-" + image.getOriginalFilename();
             Path path = Paths.get(uploadDir, fileName);
             Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            imageFoodUrl = "/images/food/" + fileName;
+            imageFoodUrl = "/api/images/food/" + fileName;
         }
 
         Food food = new Food();
@@ -104,11 +105,11 @@ public class FoodController {
                 pdfStripper.setEndPage(page);
                 String text = pdfStripper.getText(document);
 
-                System.out.println(">>> Đang kiểm tra trang " + page);
-                System.out.println(text);
+//                System.out.println(">>> Đang kiểm tra trang " + page);
+//                System.out.println(text);
 
                 if (text.toLowerCase().contains("stt: " + foodOrdinalNumbers)) {
-                    System.out.println(">>> Tìm thấy STT: " + foodOrdinalNumbers + " ở trang " + page);
+//                    System.out.println(">>> Tìm thấy STT: " + foodOrdinalNumbers + " ở trang " + page);
 
                     PDDocument singlePageDoc = new PDDocument();
                     singlePageDoc.addPage(document.getPage(page - 1));
@@ -132,6 +133,16 @@ public class FoodController {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(("Không tìm thấy STT: " + foodOrdinalNumbers + " trong nhóm " + foodGroup).getBytes());
+    }
+
+    @GetMapping("/build/ration/{energy}")
+    public ResponseEntity<?> getRation(@PathVariable double energy){
+        if(energy<2500 && energy>4860){
+            return ResponseEntity.badRequest().body("Dữ liệu năng lượng không phù hợp");
+        }else {
+            Map<Food, Double> MapFoodList = foodService.renderMenuFoodByEnergy(energy);
+            return ResponseEntity.ok(MapFoodList);
+        }
     }
 
 }
