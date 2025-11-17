@@ -40,7 +40,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf().disable().cors().and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and().authorizeHttpRequests(auth->auth.requestMatchers("/api/khoaquannhu/**")
+                .and().authorizeHttpRequests(auth->auth.requestMatchers("/api/khoaquannhu/**", "api/images/food/**")
                         .permitAll().anyRequest().authenticated())
                 ;
         return httpSecurity.build();
@@ -49,7 +49,7 @@ public class SecurityConfig {
     @Bean
     public CorsFilter corsFilter(){
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://hvhcfe.vercel.app"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://kqn.vercel.app"));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
