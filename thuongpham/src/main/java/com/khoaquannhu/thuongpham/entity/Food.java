@@ -1,6 +1,7 @@
 package com.khoaquannhu.thuongpham.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Null;
 import lombok.*;
 
 @Entity
@@ -26,7 +27,7 @@ public class Food {
     private Double lipid;
     @Column(name = "carbohydrate")
     private Double carbohydrate;
-    @Column(name = "image")
+    @Column(name = "image", nullable = true)
     private String image;
 
 }

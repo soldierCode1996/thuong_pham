@@ -42,7 +42,7 @@ public class AuthController {
             String jwt = jwtUtils.generateJwtToken(userDetails);
 
             Cookie cookie = new Cookie("jwt", jwt);
-            cookie.setDomain("hvhcfe.vercel.app");
+            cookie.setDomain("kqn.vercel.app");
 
             cookie.setHttpOnly(true);
             cookie.setPath("/");

@@ -22,6 +22,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 
 @RestController
@@ -30,14 +31,10 @@ import java.util.Map;
 public class FoodController {
     private final FoodService foodService;
 
-    @PostMapping(value = "admin/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/admin/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createFood(
-            @RequestPart("image") MultipartFile image,
+            @RequestPart(value = "image", required = false) MultipartFile image,
             @RequestPart("data") String foodDataJson) throws IOException {
-
-        // Parse JSON thủ công
-        ObjectMapper mapper = new ObjectMapper();
-        FoodRequestDto foodRequestDto = mapper.readValue(foodDataJson, FoodRequestDto.class);
 
         String imageFoodUrl = null;
         if (image != null && !image.isEmpty()) {
@@ -47,19 +44,38 @@ public class FoodController {
             Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
             imageFoodUrl = "/api/images/food/" + fileName;
         }
-
+        // Parse JSON thủ công
+        ObjectMapper mapper = new ObjectMapper();
+        FoodRequestDto foodRequestDto = mapper.readValue(foodDataJson, FoodRequestDto.class);
         Food food = new Food();
-        food.setName(foodRequestDto.getName());
-        food.setGroup(foodRequestDto.getGroup());
-        food.setOrdinalNumbers(foodRequestDto.getOrdinalNumbers());
-        food.setProtein(foodRequestDto.getProtein());
-        food.setLipid(foodRequestDto.getLipid());
-        food.setCarbohydrate(foodRequestDto.getCarbohydrate());
-        food.setImage(imageFoodUrl);
-
+        if(foodRequestDto.getId()==null){
+            Optional<Food> foodOrd = foodService.findByOrdinalNumberOrd(foodRequestDto.getOrdinalNumbers());
+            if(foodOrd.isPresent()){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Số thứ tự thực phẩm đã tồn tại");
+            }else {
+                food.setName(foodRequestDto.getName());
+                food.setGroup(foodRequestDto.getGroup());
+                food.setOrdinalNumbers(foodRequestDto.getOrdinalNumbers());
+                food.setProtein(foodRequestDto.getProtein());
+                food.setLipid(foodRequestDto.getLipid());
+                food.setCarbohydrate(foodRequestDto.getCarbohydrate());
+                food.setImage(imageFoodUrl);
+            }
+        }else {
+            food = foodService.findById(foodRequestDto.getId());
+            food.setName(foodRequestDto.getName());
+            food.setGroup(foodRequestDto.getGroup());
+            food.setOrdinalNumbers(foodRequestDto.getOrdinalNumbers());
+            food.setProtein(foodRequestDto.getProtein());
+            food.setLipid(foodRequestDto.getLipid());
+            food.setCarbohydrate(foodRequestDto.getCarbohydrate());
+            food.setImage(imageFoodUrl);
+        }
         foodService.save(food);
         return ResponseEntity.status(HttpStatus.CREATED).body(food);
     }
+
+
 
 
     @DeleteMapping("/admin/delete/{id}")

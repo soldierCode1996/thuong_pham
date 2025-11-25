@@ -37,14 +37,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.csrf().disable().cors().and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and().authorizeHttpRequests(auth->auth.requestMatchers("/api/khoaquannhu/**", "api/images/food/**")
-                        .permitAll().anyRequest().authenticated())
-                ;
-        return httpSecurity.build();
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.and())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/khoaquannhu/**").permitAll()
+                        .requestMatchers("/api/images/food/**").permitAll()
+                        .anyRequest().authenticated()
+                );
+        return http.build();
     }
+
 
     @Bean
     public CorsFilter corsFilter(){

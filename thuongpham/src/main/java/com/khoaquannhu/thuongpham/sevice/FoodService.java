@@ -25,7 +25,8 @@ public class FoodService {
     }
 
     public Food findById(Long id){
-        return foodRepository.findById(id).get();
+        return foodRepository.findById(id).orElseThrow(() ->
+                new GlobalExceptionHandler.DataNotEnoughException("Food not found"));
     }
 
     public void deleteById(Long id){
@@ -39,6 +40,9 @@ public class FoodService {
         return foodRepository.findByOrdinalNumbers(ordinalNumber).orElseThrow(()->new GlobalExceptionHandler.DataNotEnoughException("Không đủ dữ kiệu để thực hiện chương trình đúng"));
     }
 
+    public Optional<Food> findByOrdinalNumberOrd(Integer ord){
+        return foodRepository.findByOrdinalNumbers(ord);
+    }
 
 
     public List<Food> getRandomFoodList(int size){

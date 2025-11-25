@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class FoodRequestDto {
+    private Long id;
     private String name;
     private String group;
     private int ordinalNumbers;
