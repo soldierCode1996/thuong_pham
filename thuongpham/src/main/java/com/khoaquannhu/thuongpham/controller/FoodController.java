@@ -2,6 +2,7 @@ package com.khoaquannhu.thuongpham.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.khoaquannhu.thuongpham.dto.FoodRequestDto;
+import com.khoaquannhu.thuongpham.dto.FoodWithValueDto;
 import com.khoaquannhu.thuongpham.entity.Food;
 import com.khoaquannhu.thuongpham.sevice.FoodService;
 import lombok.RequiredArgsConstructor;
@@ -74,8 +75,6 @@ public class FoodController {
         foodService.save(food);
         return ResponseEntity.status(HttpStatus.CREATED).body(food);
     }
-
-
 
 
     @DeleteMapping("/admin/delete/{id}")
@@ -157,7 +156,9 @@ public class FoodController {
             return ResponseEntity.badRequest().body("Dữ liệu năng lượng không phù hợp");
         }else {
             Map<Food, Double> MapFoodList = foodService.renderMenuFoodByEnergy(energy);
-            return ResponseEntity.ok(MapFoodList);
+            List<FoodWithValueDto> foodWithValueDtoList = MapFoodList.entrySet()
+                    .stream().map(e->new FoodWithValueDto(e.getKey(), e.getValue())).toList();
+            return ResponseEntity.ok(foodWithValueDtoList);
         }
     }
 

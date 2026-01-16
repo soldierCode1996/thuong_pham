@@ -1,0 +1,1 @@
+create index if not exists idx_food_name on foods(name);
